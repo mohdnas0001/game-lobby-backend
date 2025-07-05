@@ -3,38 +3,39 @@ const fs = require('fs');
 const path = require('path');
 
 const options = {
-  definition: {
-    openapi: '3.0.0',
-    info: {
-      title: 'Game Lobby API',
-      version: '1.0.0',
-      description: 'API for managing game lobby with JWT authentication and MongoDB Atlas',
-    },
-    servers: [
-      {
-        url: 'https://game-lobby-backend-9d4k.onrender.com',
-        description: 'Production server',
+    definition: {
+      openapi: '3.0.0',
+      info: {
+        title: 'Game Lobby API',
+        version: '1.0.0',
+        description: 'API for managing game lobby with JWT authentication and MongoDB Atlas',
       },
-      {
-        url: 'http://localhost:5000',
-        description: 'Local development server',
-      },
-    ],
-    components: {
-      securitySchemes: {
-        bearerAuth: {
-          type: 'http',
-          scheme: 'bearer',
-          bearerFormat: 'JWT',
+      servers: [
+        {
+          url: 'https://game-lobby-backend-9d4k.onrender.com',
+          description: 'Production server',
+        },
+        {
+          url: 'http://localhost:5000',
+          description: 'Local development server',
+        },
+      ],
+      components: {
+        securitySchemes: {
+          bearerAuth: {
+            type: 'http',
+            scheme: 'bearer',
+            bearerFormat: 'JWT',
+          },
         },
       },
     },
-  },
-  apis: [
-    '/domain/auth/routes/authRoutes.js',
-    '/domain/game/routes/gameRoutes.js',
-  ],
-};
+    apis: [
+      path.join(__dirname, './domain/auth/routes/authRoutes.js'),
+      path.join(__dirname, './domain/game/routes/gameRoutes.js'),
+    ],
+  };
+  
 
 // Debug file paths
 options.apis.forEach(file => {
