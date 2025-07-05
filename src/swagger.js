@@ -31,8 +31,8 @@ const options = {
     },
   },
   apis: [
-    './src/domain/auth/routes/authRoutes.js',
-    './src/domain/game/routes/gameRoutes.js',
+    './domain/auth/routes/authRoutes.js',
+    './domain/game/routes/gameRoutes.js',
   ],
 };
 
