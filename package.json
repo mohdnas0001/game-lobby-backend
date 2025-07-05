@@ -2,7 +2,7 @@
   "name": "game-lobby-backend",
   "version": "1.0.0",
   "description": "Backend for game lobby system with JWT authentication and MongoDB Atlas",
-  "main": "server.js",
+  "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon -r dotenv/config src/server.js dotenv_config_path=.env"
