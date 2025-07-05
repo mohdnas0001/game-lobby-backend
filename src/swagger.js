@@ -28,7 +28,10 @@ const options = {
       },
     },
   },
-  apis: ['./src/routes/*.js', './src/domain/**/*.js'],
+  apis: [
+    './src/domain/auth/routes/authRoutes.js',
+    './src/domain/game/routes/gameRoutes.js',
+  ],
 };
 
 const swaggerSpec = swaggerJsdoc(options);
