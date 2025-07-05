@@ -1,4 +1,6 @@
 const swaggerJsdoc = require('swagger-jsdoc');
+const fs = require('fs');
+const path = require('path');
 
 const options = {
   definition: {
@@ -34,6 +36,18 @@ const options = {
   ],
 };
 
+// Debug file paths
+options.apis.forEach(file => {
+  const absolutePath = path.resolve(__dirname, file);
+  console.log(`Checking Swagger file: ${absolutePath}`);
+  if (fs.existsSync(absolutePath)) {
+    console.log(`File exists: ${absolutePath}`);
+  } else {
+    console.error(`File not found: ${absolutePath}`);
+  }
+});
+
 const swaggerSpec = swaggerJsdoc(options);
+console.log('Swagger spec operations:', swaggerSpec.paths || 'No paths defined');
 
 module.exports = swaggerSpec;
