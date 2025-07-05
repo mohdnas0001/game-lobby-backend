@@ -7,7 +7,12 @@
     "start": "node src/server.js",
     "dev": "nodemon -r dotenv/config src/server.js dotenv_config_path=.env"
   },
-  "keywords": ["game-lobby", "express", "mongodb", "jwt"],
+  "keywords": [
+    "game-lobby",
+    "express",
+    "mongodb",
+    "jwt"
+  ],
   "author": "Mohammed Nasir",
   "license": "ISC",
   "dependencies": {
@@ -15,7 +20,9 @@
     "dotenv": "^16.4.5",
     "express": "^4.18.2",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.0.0"
+    "mongoose": "^8.0.0",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.0"
