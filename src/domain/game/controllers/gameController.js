@@ -96,6 +96,11 @@ async function endSession(sessionId) {
     });
     
     await Promise.all([session.save(), gameResult.save()]);
+
+    // --- Start a new session after ending the current one ---
+    const newSession = new Session();
+    await newSession.save();
+    setTimeout(() => endSession(newSession._id), 20000);
   } catch (error) {
     console.error('Error ending session:', error);
   }
