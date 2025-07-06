@@ -2,7 +2,7 @@ const express = require('express');
 const {
   joinSession,
   pickNumber,
-  getActiveSession,
+  getOrCreateActiveSession,
   getLeaderboard
 } = require('../controllers/gameController');
 const authMiddleware = require('../../../middleware/auth');
@@ -90,7 +90,7 @@ router.post('/pick-number', authMiddleware, pickNumber);
  *       401:
  *         description: Unauthorized
  */
-router.get('/session/active', authMiddleware, getActiveSession);
+router.get('/session/active', authMiddleware, getOrCreateActiveSession);
 
 /**
  * @swagger

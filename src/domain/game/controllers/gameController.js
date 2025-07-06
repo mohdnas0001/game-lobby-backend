@@ -54,13 +54,18 @@ exports.pickNumber = async (req, res) => {
   }
 };
 
-exports.getActiveSession = async (req, res) => {
+
+exports.getOrCreateActiveSession = async (req, res) => {
   try {
-    const session = await Session.findOne({ isActive: true }).populate('players.user');
-    if (!session) return res.status(404).json({ message: 'No active session' });
+    let session = await Session.findOne({ isActive: true });
+    if (!session) {
+      session = new Session();
+      await session.save();
+      setTimeout(() => endSession(session._id), 20000);
+    }
     res.json(session);
   } catch (error) {
-    res.status(500).json({ message: 'Failed to fetch session', error: error.message });
+    res.status(500).json({ message: 'Failed to get or create session', error: error.message });
   }
 };
 
