@@ -1,5 +1,10 @@
 const express = require('express');
-const { joinSession, getSession, getLeaderboard } = require('../controllers/gameController');
+const {
+  joinSession,
+  pickNumber,
+  getActiveSession,
+  getLeaderboard
+} = require('../controllers/gameController');
 const authMiddleware = require('../../../middleware/auth');
 const router = express.Router();
 
@@ -11,18 +16,6 @@ const router = express.Router();
  *     tags: [Game]
  *     security:
  *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - number
- *             properties:
- *               number:
- *                 type: integer
- *                 example: 5
  *     responses:
  *       200:
  *         description: Successfully joined session
@@ -42,52 +35,62 @@ router.post('/join', authMiddleware, joinSession);
 
 /**
  * @swagger
- * /api/game/session/{id}:
- *   get:
- *     summary: Get details of a game session
+ * /api/game/pick-number:
+ *   post:
+ *     summary: Pick a number for the current session
  *     tags: [Game]
  *     security:
  *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *         description: Session ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - number
+ *             properties:
+ *               number:
+ *                 type: integer
+ *                 example: 5
  *     responses:
  *       200:
- *         description: Session details
+ *         description: Number picked
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
- *                 _id:
+ *                 message:
  *                   type: string
- *                 isActive:
- *                   type: boolean
- *                 players:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       user:
- *                         type: string
- *                       number:
- *                         type: integer
- *                 winningNumber:
- *                   type: integer
- *                   nullable: true
- *                 createdAt:
- *                   type: string
- *                   format: date-time
+ *       400:
+ *         description: Bad request
  *       401:
  *         description: Unauthorized
- *       404:
- *         description: Session not found
  */
-router.get('/session/:id', authMiddleware, getSession);
+router.post('/pick-number', authMiddleware, pickNumber);
+
+/**
+ * @swagger
+ * /api/game/session/active:
+ *   get:
+ *     summary: Get the currently active session
+ *     tags: [Game]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Active session details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Session'
+ *       404:
+ *         description: No active session
+ *       401:
+ *         description: Unauthorized
+ */
+router.get('/session/active', authMiddleware, getActiveSession);
 
 /**
  * @swagger
