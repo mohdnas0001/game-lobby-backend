@@ -12,7 +12,7 @@ exports.register = async (req, res) => {
     const user = new User({ username: username.trim() });
     await user.save();
     
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'your_jwt_secret', { expiresIn: '1h' });
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET , { expiresIn: '1h' });
     res.json({ token, username });
   } catch (error)
   {
@@ -32,8 +32,8 @@ exports.login = async (req, res) => {
       await user.save();
     }
     
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'your_jwt_secret', { expiresIn: '1h' });
-    res.json({ token, username });
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET , { expiresIn: '1h' });
+    res.json({ token, username , wins: user.wins  });
   } catch (error) {
     res.status(500).json({ message: 'Login failed', error: error.message });
   }
