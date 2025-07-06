@@ -54,10 +54,10 @@ exports.pickNumber = async (req, res) => {
   }
 };
 
-exports.getSession = async (req, res) => {
+exports.getActiveSession = async (req, res) => {
   try {
-    const session = await Session.findById(req.params.id).populate('players.user');
-    if (!session) return res.status(404).json({ message: 'Session not found' });
+    const session = await Session.findOne({ isActive: true }).populate('players.user');
+    if (!session) return res.status(404).json({ message: 'No active session' });
     res.json(session);
   } catch (error) {
     res.status(500).json({ message: 'Failed to fetch session', error: error.message });
