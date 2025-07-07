@@ -116,9 +116,8 @@ async function endSession(sessionId) {
 
     await Promise.all([session.save(), gameResult.save()]);
 
-    // --- Restart the same session for the next round ---
     session.isActive = true;
-    session.createdAt = new Date();
+    session.set('createdAt', new Date());
     session.winningNumber = undefined;
     session.players = [];
     await session.save();
