@@ -41,14 +41,11 @@ exports.pickNumber = async (req, res) => {
     if (!player) {
       return res.status(400).json({ message: 'Not joined' });
     }
-    if (player.number) {
-      return res.status(400).json({ message: 'Number already picked' });
-    }
 
-    player.number = number;
+    player.number = number; 
     await session.save();
 
-    res.json({ message: 'Number picked' });
+    res.json({ message: 'Number picked/updated' });
   } catch (error) {
     res.status(500).json({ message: 'Failed to pick number', error: error.message });
   }
@@ -75,6 +72,21 @@ exports.getLeaderboard = async (req, res) => {
     res.json(topPlayers);
   } catch (error) {
     res.status(500).json({ message: 'Failed to fetch leaderboard', error: error.message });
+  }
+};
+
+exports.getSessionResult = async (req, res) => {
+  try {
+    const session = await Session.findById(req.params.id);
+    if (!session || session.isActive) {
+      return res.status(400).json({ message: 'Session not ended or not found' });
+    }
+    res.json({
+      winningNumber: session.winningNumber,
+      winners: session.players.filter(p => p.number === session.winningNumber).map(p => p.user)
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch session result', error: error.message });
   }
 };
 
