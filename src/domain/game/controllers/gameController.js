@@ -76,55 +76,35 @@ exports.endSession = async (req, res) => {
   try {
     const { sessionId } = req.body;
     const session = await Session.findById(sessionId);
-    if (!session || !session.isActive) {
-      return res.status(400).json({ message: 'Session not active or not found' });
+    if (!session) {
+      return res.status(400).json({ message: 'Session not found' });
     }
-
-    // End the session
+    if (!session.isActive) {
+      return res.json({ message: 'Session already ended', winningNumber: session.winningNumber, winners: session.players.filter(p => p.number === session.winningNumber).map(p => p.user) });
+    }
     session.isActive = false;
     session.winningNumber = Math.floor(Math.random() * 10) + 1;
-    const winners = session.players
-      .filter(p => p.number === session.winningNumber)
-      .map(p => p.user);
-
-    await User.updateMany(
-      { _id: { $in: winners } },
-      { $inc: { wins: 1 } }
-    );
-
-    const gameResult = new GameResult({
-      session: session._id,
-      winners,
-    });
-
+    const winners = session.players.filter(p => p.number === session.winningNumber).map(p => p.user);
+    await User.updateMany({ _id: { $in: winners } }, { $inc: { wins: 1 } });
+    const gameResult = new GameResult({ session: session._id, winners });
     await Promise.all([session.save(), gameResult.save()]);
-
-    res.json({
-      message: 'Session ended',
-      winningNumber: session.winningNumber,
-      winners,
-    });
+    res.json({ message: 'Session ended', winningNumber: session.winningNumber, winners });
   } catch (error) {
     console.error('Error ending session:', error);
     res.status(500).json({ message: 'Failed to end session', error: error.message });
   }
 };
 
+
 exports.createNewSession = async (req, res) => {
   try {
     const activeSession = await Session.findOne({ isActive: true });
     if (activeSession) {
-      return res.status(400).json({ message: 'An active session already exists' });
+      return res.status(400).json({ message: 'An active session already exists', session: activeSession });
     }
-
     const session = new Session();
     await session.save();
-    res.json({
-      _id: session._id,
-      isActive: session.isActive,
-      createdAt: session.createdAt, // UTC timestamp
-      players: session.players,
-    });
+    res.json({ _id: session._id, isActive: session.isActive, createdAt: session.createdAt, players: session.players });
   } catch (error) {
     console.error('Error creating new session:', error);
     res.status(500).json({ message: 'Failed to create new session', error: error.message });
