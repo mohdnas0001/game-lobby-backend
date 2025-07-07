@@ -13,7 +13,7 @@ exports.getOrCreateActiveSession = async (req, res) => {
     res.json({
       _id: session._id,
       isActive: session.isActive,
-      createdAt: session.createdAt, // UTC timestamp
+      createdAt: session.createdAt,
       players: session.players,
     });
   } catch (error) {

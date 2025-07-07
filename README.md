@@ -24,7 +24,7 @@ Backend for a game lobby system, built with Express and MongoDB. Handles JWT aut
 Create a .env file in the backend root:
 ```bash
     PORT=5000
-    MONGODB_URI=mongodb://localhost:27017/game-lobby
+    MONGODB_URI=mongodb://
     JWT_SECRET=your_jwt_secret_here
 ```
 Replace MONGODB_URI with your MongoDB connection string.
