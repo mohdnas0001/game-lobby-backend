@@ -3,7 +3,8 @@ const {
   joinSession,
   pickNumber,
   getOrCreateActiveSession,
-  getLeaderboard
+  getLeaderboard,
+  getSessionResult
 } = require('../controllers/gameController');
 const authMiddleware = require('../../../middleware/auth');
 const router = express.Router();
@@ -28,6 +29,8 @@ const router = express.Router();
  *                   type: string
  *                 sessionId:
  *                   type: string
+ *       400:
+ *         description: Already joined this session
  *       401:
  *         description: Unauthorized
  */
@@ -55,7 +58,7 @@ router.post('/join', authMiddleware, joinSession);
  *                 example: 5
  *     responses:
  *       200:
- *         description: Number picked
+ *         description: Number picked/updated
  *         content:
  *           application/json:
  *             schema:
@@ -64,7 +67,7 @@ router.post('/join', authMiddleware, joinSession);
  *                 message:
  *                   type: string
  *       400:
- *         description: Bad request
+ *         description: Bad request or number already picked
  *       401:
  *         description: Unauthorized
  */
@@ -91,6 +94,43 @@ router.post('/pick-number', authMiddleware, pickNumber);
  *         description: Unauthorized
  */
 router.get('/session/active', authMiddleware, getOrCreateActiveSession);
+
+/**
+ * @swagger
+ * /api/game/session/result/{id}:
+ *   get:
+ *     summary: Get the result of a finished session
+ *     tags: [Game]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Session ID
+ *     responses:
+ *       200:
+ *         description: Session result
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 winningNumber:
+ *                   type: integer
+ *                 winners:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *       400:
+ *         description: Session not ended or not found
+ *       401:
+ *         description: Unauthorized
+ */
+router.get('/session/result/:id', authMiddleware, getSessionResult);
+
 
 /**
  * @swagger
