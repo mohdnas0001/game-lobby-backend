@@ -16,7 +16,7 @@ exports.joinSession = async (req, res) => {
       return res.status(400).json({ message: 'Already joined this session' });
     }
 
-    session.players.push({ user: req.user.id }); // No number yet
+    session.players.push({ user: req.user.id }); 
     await session.save();
 
     res.json({ message: 'Joined session', sessionId: session._id });
@@ -90,34 +90,40 @@ exports.getSessionResult = async (req, res) => {
   }
 };
 
+
 async function endSession(sessionId) {
   try {
     const session = await Session.findById(sessionId);
     if (!session || !session.isActive) return;
-    
+
+    // End current round
     session.isActive = false;
     session.winningNumber = Math.floor(Math.random() * 10) + 1;
-    
+
     const winners = session.players
       .filter(p => p.number === session.winningNumber)
       .map(p => p.user);
-    
+
     await User.updateMany(
       { _id: { $in: winners } },
       { $inc: { wins: 1 } }
     );
-    
+
     const gameResult = new GameResult({
       session: session._id,
       winners
     });
-    
+
     await Promise.all([session.save(), gameResult.save()]);
 
-    // --- Start a new session after ending the current one ---
-    const newSession = new Session();
-    await newSession.save();
-    setTimeout(() => endSession(newSession._id), 20000);
+    // --- Restart the same session for the next round ---
+    session.isActive = true;
+    session.createdAt = new Date();
+    session.winningNumber = undefined;
+    session.players = [];
+    await session.save();
+
+    setTimeout(() => endSession(session._id), 20000);
   } catch (error) {
     console.error('Error ending session:', error);
   }
