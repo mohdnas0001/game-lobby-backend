@@ -2,13 +2,32 @@ const Session = require('../models/Session');
 const GameResult = require('../models/GameResult');
 const User = require('../../auth/models/User');
 
+
+exports.getOrCreateActiveSession = async (req, res) => {
+  try {
+    let session = await Session.findOne({ isActive: true });
+    if (!session) {
+      session = new Session();
+      await session.save();
+    }
+    res.json({
+      _id: session._id,
+      isActive: session.isActive,
+      createdAt: session.createdAt, // UTC timestamp
+      players: session.players,
+    });
+  } catch (error) {
+    console.error('Error getting or creating session:', error);
+    res.status(500).json({ message: 'Failed to get or create session', error: error.message });
+  }
+};
+
 exports.joinSession = async (req, res) => {
   try {
     let session = await Session.findOne({ isActive: true });
     if (!session) {
       session = new Session();
       await session.save();
-      setTimeout(() => endSession(session._id), 20000);
     }
 
     const alreadyJoined = session.players.some(p => p.user.toString() === req.user.id);
@@ -16,11 +35,12 @@ exports.joinSession = async (req, res) => {
       return res.status(400).json({ message: 'Already joined this session' });
     }
 
-    session.players.push({ user: req.user.id }); 
+    session.players.push({ user: req.user.id });
     await session.save();
 
     res.json({ message: 'Joined session', sessionId: session._id });
   } catch (error) {
+    console.error('Error joining session:', error);
     res.status(500).json({ message: 'Failed to join session', error: error.message });
   }
 };
@@ -42,80 +62,27 @@ exports.pickNumber = async (req, res) => {
       return res.status(400).json({ message: 'Not joined' });
     }
 
-    player.number = number; 
+    player.number = number;
     await session.save();
 
     res.json({ message: 'Number picked/updated' });
   } catch (error) {
+    console.error('Error picking number:', error);
     res.status(500).json({ message: 'Failed to pick number', error: error.message });
   }
 };
 
-exports.getOrCreateActiveSession = async (req, res) => {
+exports.endSession = async (req, res) => {
   try {
-    let session = await Session.findOne({ isActive: true });
-    if (!session) {
-      session = new Session();
-      await session.save();
-      setTimeout(() => endSession(session._id), 20000);
-    }
-
-    // Calculate time left on the backend
-    const SESSION_DURATION = 20; // seconds
-    const startTime = new Date(session.createdAt).getTime();
-    const now = Date.now();
-    const timeLeft = Math.max(0, Math.floor((startTime + SESSION_DURATION * 1000 - now) / 1000));
-
-    res.json({
-      _id: session._id,
-      isActive: session.isActive,
-      createdAt: session.createdAt,
-      players: session.players,
-      timeLeft, // Include timeLeft in the response
-    });
-  } catch (error) {
-    res.status(500).json({ message: 'Failed to get or create session', error: error.message });
-  }
-};
-
-exports.getLeaderboard = async (req, res) => {
-  try {
-    const topPlayers = await User.find().sort({ wins: -1 }).limit(10);
-    res.json(topPlayers);
-  } catch (error) {
-    res.status(500).json({ message: 'Failed to fetch leaderboard', error: error.message });
-  }
-};
-
-exports.getSessionResult = async (req, res) => {
-  try {
-    const session = await Session.findById(req.params.id);
-    if (!session || session.isActive) {
-      return res.status(400).json({ message: 'Session not ended or not found' });
-    }
-    res.json({
-      winningNumber: session.winningNumber,
-      winners: session.players.filter(p => p.number === session.winningNumber).map(p => p.user)
-    });
-  } catch (error) {
-    res.status(500).json({ message: 'Failed to fetch session result', error: error.message });
-  }
-};
-
-
-const SESSION_DURATION = 20; // seconds, consistent with frontend
-
-async function endSession(sessionId) {
-  try {
+    const { sessionId } = req.body;
     const session = await Session.findById(sessionId);
     if (!session || !session.isActive) {
-      console.log(`Session ${sessionId} not found or already inactive`);
-      return;
+      return res.status(400).json({ message: 'Session not active or not found' });
     }
 
-    // End current round
+    // End the session
     session.isActive = false;
-    session.winningNumber = Math.floor(Math.random() * 10) + 1; // Fixed bug
+    session.winningNumber = Math.floor(Math.random() * 10) + 1;
     const winners = session.players
       .filter(p => p.number === session.winningNumber)
       .map(p => p.user);
@@ -131,22 +98,61 @@ async function endSession(sessionId) {
     });
 
     await Promise.all([session.save(), gameResult.save()]);
-    console.log(`Session ${sessionId} ended. Winning number: ${session.winningNumber}, Winners: ${winners.length}`);
 
-    // Delay before restarting the session (5 seconds)
-    setTimeout(async () => {
-      session.isActive = true;
-      session.createdAt = new Date();
-      session.markModified('createdAt');
-      session.winningNumber = undefined;
-      session.players = [];
-      await session.save();
-      console.log(`Session ${sessionId} restarted with new createdAt: ${session.createdAt}`);
-
-      // Schedule the next session end
-      setTimeout(() => endSession(session._id), SESSION_DURATION * 1000);
-    }, 5000); // 5-second delay
+    res.json({
+      message: 'Session ended',
+      winningNumber: session.winningNumber,
+      winners,
+    });
   } catch (error) {
-    console.error(`Error ending session ${sessionId}:`, error);
+    console.error('Error ending session:', error);
+    res.status(500).json({ message: 'Failed to end session', error: error.message });
   }
-}
+};
+
+exports.createNewSession = async (req, res) => {
+  try {
+    const activeSession = await Session.findOne({ isActive: true });
+    if (activeSession) {
+      return res.status(400).json({ message: 'An active session already exists' });
+    }
+
+    const session = new Session();
+    await session.save();
+    res.json({
+      _id: session._id,
+      isActive: session.isActive,
+      createdAt: session.createdAt, // UTC timestamp
+      players: session.players,
+    });
+  } catch (error) {
+    console.error('Error creating new session:', error);
+    res.status(500).json({ message: 'Failed to create new session', error: error.message });
+  }
+};
+
+exports.getSessionResult = async (req, res) => {
+  try {
+    const session = await Session.findById(req.params.id);
+    if (!session || session.isActive) {
+      return res.status(400).json({ message: 'Session not ended or not found' });
+    }
+    res.json({
+      winningNumber: session.winningNumber,
+      winners: session.players.filter(p => p.number === session.winningNumber).map(p => p.user),
+    });
+  } catch (error) {
+    console.error('Error fetching session result:', error);
+    res.status(500).json({ message: 'Failed to fetch session result', error: error.message });
+  }
+};
+
+exports.getLeaderboard = async (req, res) => {
+  try {
+    const topPlayers = await User.find().sort({ wins: -1 }).limit(10);
+    res.json(topPlayers);
+  } catch (error) {
+    console.error('Error fetching leaderboard:', error);
+    res.status(500).json({ message: 'Failed to fetch leaderboard', error: error.message });
+  }
+};
