@@ -12,5 +12,5 @@ Backend for a game lobby system, built with Express and MongoDB. Handles JWT aut
 ### Installation
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-username/game-lobby-backend.git
+   git clone https://github.com/mohdnas0001/game-lobby-backend
    cd game-lobby-backend
