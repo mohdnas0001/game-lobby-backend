@@ -51,7 +51,6 @@ exports.pickNumber = async (req, res) => {
   }
 };
 
-
 exports.getOrCreateActiveSession = async (req, res) => {
   try {
     let session = await Session.findOne({ isActive: true });
@@ -60,7 +59,20 @@ exports.getOrCreateActiveSession = async (req, res) => {
       await session.save();
       setTimeout(() => endSession(session._id), 20000);
     }
-    res.json(session);
+
+    // Calculate time left on the backend
+    const SESSION_DURATION = 20; // seconds
+    const startTime = new Date(session.createdAt).getTime();
+    const now = Date.now();
+    const timeLeft = Math.max(0, Math.floor((startTime + SESSION_DURATION * 1000 - now) / 1000));
+
+    res.json({
+      _id: session._id,
+      isActive: session.isActive,
+      createdAt: session.createdAt,
+      players: session.players,
+      timeLeft, // Include timeLeft in the response
+    });
   } catch (error) {
     res.status(500).json({ message: 'Failed to get or create session', error: error.message });
   }
@@ -91,15 +103,19 @@ exports.getSessionResult = async (req, res) => {
 };
 
 
+const SESSION_DURATION = 20; // seconds, consistent with frontend
+
 async function endSession(sessionId) {
   try {
     const session = await Session.findById(sessionId);
-    if (!session || !session.isActive) return;
+    if (!session || !session.isActive) {
+      console.log(`Session ${sessionId} not found or already inactive`);
+      return;
+    }
 
     // End current round
     session.isActive = false;
-    session.winningNumber = Math.floor(Math.random() * 10) + 1;
-
+    session.winningNumber = Math.floor(Math.random() * 10) + 1; // Fixed bug
     const winners = session.players
       .filter(p => p.number === session.winningNumber)
       .map(p => p.user);
@@ -111,21 +127,26 @@ async function endSession(sessionId) {
 
     const gameResult = new GameResult({
       session: session._id,
-      winners
+      winners,
     });
 
     await Promise.all([session.save(), gameResult.save()]);
+    console.log(`Session ${sessionId} ended. Winning number: ${session.winningNumber}, Winners: ${winners.length}`);
 
-    // --- Restart the same session for the next round ---
-    session.isActive = true;
-    session.createdAt = new Date();
-    session.markModified('createdAt'); // <-- THIS IS THE FIX
-    session.winningNumber = undefined;
-    session.players = [];
-    await session.save();
+    // Delay before restarting the session (5 seconds)
+    setTimeout(async () => {
+      session.isActive = true;
+      session.createdAt = new Date();
+      session.markModified('createdAt');
+      session.winningNumber = undefined;
+      session.players = [];
+      await session.save();
+      console.log(`Session ${sessionId} restarted with new createdAt: ${session.createdAt}`);
 
-    setTimeout(() => endSession(session._id), 20000);
+      // Schedule the next session end
+      setTimeout(() => endSession(session._id), SESSION_DURATION * 1000);
+    }, 5000); // 5-second delay
   } catch (error) {
-    console.error('Error ending session:', error);
+    console.error(`Error ending session ${sessionId}:`, error);
   }
 }
