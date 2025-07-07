@@ -10,7 +10,30 @@ Backend for a game lobby system, built with Express and MongoDB. Handles JWT aut
 - npm
 
 ### Installation
-1. Clone the repository:
+### Backend Setup
+1. **Clone the Backend Repository**:
    ```bash
-   git clone https://github.com/mohdnas0001/game-lobby-backend
+   git clone https://github.com/your-username/game-lobby-backend.git
    cd game-lobby-backend
+
+2. **Install Dependencies**:
+   ```bash
+   yarn install
+
+3. **Configure Environment Variabless**:
+Create a .env file in the backend root:
+```bash
+    PORT=5000
+    MONGODB_URI=mongodb://localhost:27017/game-lobby
+    JWT_SECRET=your_jwt_secret_here
+```
+Replace MONGODB_URI with your MongoDB connection string.
+
+Generate a secure JWT_SECRET.
+
+4. **Run the Backend Locally**:
+Create a .env file in the backend root:
+```bash
+yarn start
+```
+The backend will run on http://localhost:5000.
