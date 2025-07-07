@@ -100,7 +100,15 @@ exports.createNewSession = async (req, res) => {
   try {
     const activeSession = await Session.findOne({ isActive: true });
     if (activeSession) {
-      return res.status(400).json({ message: 'An active session already exists', session: activeSession });
+      return res.status(400).json({
+        message: 'An active session already exists',
+        session: {
+          _id: activeSession._id,
+          isActive: activeSession.isActive,
+          createdAt: activeSession.createdAt,
+          players: activeSession.players,
+        },
+      });
     }
     const session = new Session();
     await session.save();
